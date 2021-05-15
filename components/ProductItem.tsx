@@ -1,13 +1,52 @@
-import { memo } from "react";
+import { memo, useState } from "react";
+import dynamic from "next/dynamic";
+import { AddProductToWishListProps } from "./AddProductToWishList";
+
+/* 
+  ! BUNDLE
+  todas as importacoes do app sao jogadas dentro da bundle.js e jogadas dentro de um unico arquivo e tudo vai ser carregado uma vez só durante a inicializaco do app, para previnir pesar a bundle podemos utilizar o metodo lazy loading
+  Lazy Loading -> carregamento preguiçoso
+  como o componente só é carregado uma condicional for feita entao nao precisamos pesar a bundle no inicio
+
+  lazy loading no next = dynamic
+  lazy loading no react = lazy
+
+  podemos fazer o lazy import dentro de funcoes tambem que só sao executadas quando o usuario clicar em algum comando 
+  Ex:
+  async function formatDate() {
+    const { format } = await import 'date-fns' // assim so vai ser carregado quando utilizar a funcao
+
+    format()...
+  }
+*/
+const AddProductToWishList = dynamic<AddProductToWishListProps>(
+  () =>
+    import("./AddProductToWishList").then(
+      (module) => module.AddProductToWishList
+    ),
+  {
+    loading: () => <p>carregando...</p>, // como vai ser carregado só depois que o usuario clicar no butao para aparecer, vai levar um tempo dependendo da internet para exibir o componente entao podemos colocar um loading
+  }
+);
 
 interface SearchResultsProps {
-  product: { id: number; price: number; title: string };
+  product: { id: number; price: number; title: string; priceFormatted: string };
+  onAddToWishList: (id: number) => void;
 }
 
-const ProductItemBase = ({ product }: SearchResultsProps) => {
+const ProductItemBase = ({ product, onAddToWishList }: SearchResultsProps) => {
+  const [isAddToWishListOpen, setIsAddToWishListOpen] = useState(false);
+
   return (
     <div>
-      {product.title} - <strong>{product.price}</strong>
+      {product.title} - <strong>{product.priceFormatted}</strong>
+      <button onClick={() => setIsAddToWishListOpen(true)}>addToList</button>
+      {isAddToWishListOpen && (
+        <AddProductToWishList
+          onAddToWishList={() => onAddToWishList(product.id)}
+          onRequestClose={() => setIsAddToWishListOpen(false)}
+        />
+      )}
     </div>
   );
 };
